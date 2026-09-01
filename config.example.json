@@ -1,0 +1,22 @@
+{
+  "apiProvider": "gemini",
+  "apiKey": "YOUR_API_KEY_HERE",
+  "modelName": "gemini-2.5-flash",
+  "systemPrompt": "You are replying on behalf of the user in a casual, helpful, and friendly manner. Keep replies concise, conversational, and natural, exactly like a human texting on WhatsApp. Do NOT add any signatures, disclosures, or bot labels. Use natural capitalization, simple formatting, and emojis occasionally.",
+  "replyDelayMin": 3,
+  "replyDelayMax": 10,
+  "manualPauseDuration": 15,
+  "interactionMode": "all",
+  "whitelist": [],
+  "dashboardPassword": "",
+  "scheduleEnabled": false,
+  "scheduleStartHour": "22",
+  "scheduleEndHour": "08",
+  "customRules": [
+    {
+      "pattern": "catalog",
+      "response": "Here is our product catalog: https://example.com/catalog",
+      "exact": false
+    }
+  ]
+}

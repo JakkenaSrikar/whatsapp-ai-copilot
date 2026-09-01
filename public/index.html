@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp AI Agent Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Login Security Overlay -->
+    <div id="login-overlay" class="login-overlay hidden">
+        <div class="login-card glass-card">
+            <div class="login-header">
+                <i class="fa-solid fa-shield-halved security-icon"></i>
+                <h2>Dashboard Locked</h2>
+                <p>Please enter the dashboard password to access the panel</p>
+            </div>
+            <div class="login-body">
+                <form id="login-form">
+                    <div class="form-group">
+                        <input type="password" id="dashboard-login-password" placeholder="Enter Password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Unlock Settings</button>
+                    <span id="login-error-msg" class="login-error hidden">Incorrect password. Please try again.</span>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-gradient"></div>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-logo">
+                <i class="fa-brands fa-whatsapp whatsapp-icon"></i>
+                <h1>WhatsApp AI Agent</h1>
+            </div>
+            <div class="status-indicator-container">
+                <span id="connection-dot" class="status-dot disconnected"></span>
+                <span id="connection-text">Checking status...</span>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Content -->
+        <main class="dashboard-grid">
+            <!-- Left Side: Status, Analytics, & Settings -->
+            <div class="left-column">
+                
+                <!-- Status & QR Code Card -->
+                <section class="card glass-card status-card">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-signal"></i> Connection Status</h2>
+                        <button id="btn-restart" class="btn btn-secondary btn-icon-only" title="Restart Bot"><i class="fa-solid fa-rotate-right"></i></button>
+                    </div>
+                    <div class="card-body">
+                        <!-- QR Code Container -->
+                        <div id="qr-container" class="qr-box hidden">
+                            <p class="qr-instruction">Scan this QR code with your WhatsApp app (Linked Devices) to connect.</p>
+                            <div id="qr-code"></div>
+                            <span class="qr-timestamp">QR code updates automatically</span>
+                        </div>
+                        
+                        <!-- Connected State View -->
+                        <div id="connected-view" class="connected-info hidden">
+                            <div class="success-icon-wrapper">
+                                <i class="fa-solid fa-circle-check animated-pulse"></i>
+                            </div>
+                            <h3>Bot Connected & Ready</h3>
+                            <p class="connected-details">Listening for incoming WhatsApp messages...</p>
+                        </div>
+                        
+                        <!-- Connecting State View -->
+                        <div id="connecting-view" class="connecting-info">
+                            <div class="spinner"></div>
+                            <h3>Initializing Engine</h3>
+                            <p id="connecting-status-text">Booting up headless browser...</p>
+                        </div>
+
+                        <!-- Stats Strip -->
+                        <div class="stats-strip">
+                            <div class="stat-item">
+                                <span class="stat-val" id="stat-replies">0</span>
+                                <span class="stat-lbl">Replies Sent</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-val" id="stat-chats-count">0</span>
+                                <span class="stat-lbl">Active Chats</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Analytics Card -->
+                <section class="card glass-card analytics-card">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-chart-simple"></i> System Analytics</h2>
+                        <span id="uptime-display" class="uptime-badge">Uptime: 0s</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="analytics-grid">
+                            <div class="analytics-item">
+                                <div class="analytics-icon"><i class="fa-solid fa-envelope"></i></div>
+                                <div class="analytics-info">
+                                    <span class="analytics-val" id="stat-received">0</span>
+                                    <span class="analytics-lbl">Total Received</span>
+                                </div>
+                            </div>
+                            <div class="analytics-item">
+                                <div class="analytics-icon"><i class="fa-solid fa-reply"></i></div>
+                                <div class="analytics-info">
+                                    <span class="analytics-val" id="stat-replies-sent">0</span>
+                                    <span class="analytics-lbl">Auto-Replies</span>
+                                </div>
+                            </div>
+                            <div class="analytics-item">
+                                <div class="analytics-icon"><i class="fa-solid fa-user-pen"></i></div>
+                                <div class="analytics-info">
+                                    <span class="analytics-val" id="stat-overrides">0</span>
+                                    <span class="analytics-lbl">Manual Pauses</span>
+                                </div>
+                            </div>
+                            <div class="analytics-item">
+                                <div class="analytics-icon"><i class="fa-solid fa-circle-exclamation"></i></div>
+                                <div class="analytics-info">
+                                    <span class="analytics-val" id="stat-errors">0</span>
+                                    <span class="analytics-lbl">API Errors</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Configuration Form Card -->
+                <section class="card glass-card config-card">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-sliders"></i> Configuration</h2>
+                    </div>
+                    <div class="card-body">
+                        <form id="config-form">
+                            <!-- Provider Selector -->
+                            <div class="form-group">
+                                <label for="api-provider">AI Provider</label>
+                                <select id="api-provider" class="select-custom">
+                                    <option value="gemini">Google Gemini (AI Studio)</option>
+                                    <option value="groq">Groq Console (Llama 3 / Gemma)</option>
+                                </select>
+                            </div>
+
+                            <!-- API Key -->
+                            <div class="form-group">
+                                <label for="api-key" id="api-key-label">Gemini API Key</label>
+                                <div class="input-with-icon">
+                                    <i class="fa-solid fa-key"></i>
+                                    <input type="password" id="api-key" placeholder="Enter API Key" autocomplete="off">
+                                    <button type="button" id="btn-toggle-key" class="btn-input-action"><i class="fa-solid fa-eye"></i></button>
+                                </div>
+                                <span class="form-help" id="api-key-help">Keys are stored locally in config.json. Get one from Google AI Studio.</span>
+                            </div>
+
+                            <!-- Model Selector -->
+                            <div class="form-group">
+                                <label for="model-name">Model Name</label>
+                                <select id="model-name" class="select-custom">
+                                    <!-- Populated dynamically via JS -->
+                                </select>
+                                <span class="form-help" id="model-help">If one model hits a daily limit, switching to another might provide a fresh free quota.</span>
+                            </div>
+
+                            <!-- Dashboard Password -->
+                            <div class="form-group">
+                                <label for="dashboard-password">Dashboard Password</label>
+                                <div class="input-with-icon">
+                                    <i class="fa-solid fa-lock"></i>
+                                    <input type="password" id="dashboard-password" placeholder="Leave empty for no password" autocomplete="off">
+                                </div>
+                                <span class="form-help">Secure this web panel from unauthorized access.</span>
+                            </div>
+
+                            <!-- Scheduler Hours -->
+                            <div class="form-group">
+                                <label class="checkbox-container">
+                                    <input type="checkbox" id="schedule-enabled">
+                                    <span class="checkmark-custom"></span>
+                                    Enable Active Hours Schedule
+                                </label>
+                                <div id="schedule-hours-group" class="form-row hidden mt-2">
+                                    <div class="form-group col-6">
+                                        <label for="schedule-start">Start Hour (00-23)</label>
+                                        <input type="number" id="schedule-start" min="0" max="23" value="22" placeholder="e.g. 22 (10 PM)">
+                                    </div>
+                                    <div class="form-group col-6">
+                                        <label for="schedule-end">End Hour (00-23)</label>
+                                        <input type="number" id="schedule-end" min="0" max="23" value="8" placeholder="e.g. 8 (8 AM)">
+                                    </div>
+                                    <span class="form-help">Agent only replies during these hours. Range can cross midnight (e.g. 22 to 8).</span>
+                                </div>
+                            </div>
+
+                            <!-- Bot Persona -->
+                            <div class="form-group">
+                                <label for="system-prompt">AI Bot Persona (System Prompt)</label>
+                                <textarea id="system-prompt" rows="4" placeholder="You are an automated assistant. Reply politely and concisely..."></textarea>
+                                <span class="form-help">Instruct the AI how to behave, speak, and sign off.</span>
+                            </div>
+
+                            <div class="form-row">
+                                <!-- Response Delay -->
+                                <div class="form-group col-6">
+                                    <label for="reply-delay-min">Min Delay (sec)</label>
+                                    <input type="number" id="reply-delay-min" min="1" max="60" value="3">
+                                </div>
+                                <div class="form-group col-6">
+                                    <label for="reply-delay-max">Max Delay (sec)</label>
+                                    <input type="number" id="reply-delay-max" min="1" max="60" value="15">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <!-- Manual Override Duration -->
+                                <div class="form-group col-12">
+                                    <label for="manual-pause">Pause on Manual Reply (min)</label>
+                                    <input type="number" id="manual-pause" min="0" max="1440" value="15">
+                                    <span class="form-help">Pauses bot auto-reply for X minutes when you send a message manually.</span>
+                                </div>
+                            </div>
+
+                            <!-- Mode Settings -->
+                            <div class="form-group">
+                                <label>Interaction Mode</label>
+                                <div class="radio-toggle-group">
+                                    <label class="radio-label">
+                                        <input type="radio" name="mode" value="all" checked>
+                                        <span class="radio-button-custom">Reply to All</span>
+                                    </label>
+                                    <label class="radio-label">
+                                        <input type="radio" name="mode" value="whitelist">
+                                        <span class="radio-button-custom">Whitelist Only</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Whitelist Input (hidden if mode is 'all') -->
+                            <div id="whitelist-group" class="form-group hidden">
+                                <label for="whitelist">Whitelisted Phone Numbers</label>
+                                <textarea id="whitelist" rows="2" placeholder="e.g. 1234567890, 9876543210 (include country code without +)"></textarea>
+                                <span class="form-help">Comma-separated list of numbers that the AI should reply to.</span>
+                            </div>
+
+                            <button type="submit" id="btn-save-config" class="btn btn-primary btn-block">
+                                <i class="fa-solid fa-floppy-disk"></i> Save Settings
+                            </button>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- Custom Keyword Rules Card -->
+                <section class="card glass-card rules-card">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-reply-all"></i> Keyword Auto-Replies</h2>
+                    </div>
+                    <div class="card-body">
+                        <p class="section-intro-text text-muted mb-3">Define static responses for specific keywords. These replies bypass AI models and respond instantly.</p>
+                        
+                        <!-- Add Rule Form -->
+                        <form id="add-rule-form" class="rule-builder-form">
+                            <div class="form-group">
+                                <label for="rule-pattern">Trigger Keyword / Phrase</label>
+                                <input type="text" id="rule-pattern" placeholder="e.g. price" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="rule-response">Auto-Reply Response</label>
+                                <textarea id="rule-response" rows="2" placeholder="e.g. Our catalog is at domain.com/catalog" required></textarea>
+                            </div>
+                            <div class="form-row align-items-center mb-2">
+                                <div class="form-group col-6">
+                                    <label class="checkbox-container">
+                                        <input type="checkbox" id="rule-exact">
+                                        <span class="checkmark-custom"></span>
+                                        Exact Match
+                                    </label>
+                                </div>
+                                <div class="form-group col-6 text-right">
+                                    <button type="submit" class="btn btn-secondary btn-sm"><i class="fa-solid fa-plus"></i> Add Rule</button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- Rules Table -->
+                        <div class="table-responsive rules-table-container mt-3">
+                            <table class="rules-table">
+                                <thead>
+                                    <tr>
+                                        <th>Pattern</th>
+                                        <th>Response</th>
+                                        <th>Match</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rules-list-body">
+                                    <!-- Dynamic Rules -->
+                                    <tr class="empty-rules-row">
+                                        <td colspan="4" class="text-center text-muted">No custom rules added yet.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Side: Terminal Logs & Chat Control -->
+            <div class="right-column">
+                <!-- Live Console Card -->
+                <section class="card glass-card console-card">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-terminal"></i> Live Console Log</h2>
+                        <div class="card-header-actions">
+                            <select id="log-filter" class="select-custom">
+                                <option value="all">All Logs</option>
+                                <option value="incoming">Incoming Msg</option>
+                                <option value="outgoing">Auto Replies</option>
+                                <option value="system">System Status</option>
+                                <option value="error">Errors</option>
+                            </select>
+                            <button id="btn-clear-console" class="btn btn-secondary btn-sm"><i class="fa-solid fa-trash-can"></i> Clear</button>
+                        </div>
+                    </div>
+                    <div class="card-body console-body">
+                        <div id="console-logs" class="console-logs">
+                            <!-- Logs will be inserted here dynamically -->
+                            <div class="log-entry system"><span class="log-time">[11:18:10]</span> Console initialized. Waiting for backend connection...</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Active Chats List Card -->
+                <section class="card glass-card chats-card">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-comments"></i> Managed Conversations</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="chats-table">
+                                <thead>
+                                    <tr>
+                                        <th>Contact / Number</th>
+                                        <th>Last Message</th>
+                                        <th>Status</th>
+                                        <th>Auto-Reply Toggle</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="chats-list-body">
+                                    <!-- Dynamic chat rows -->
+                                    <tr class="empty-row">
+                                        <td colspan="4">No active conversations monitored yet. Sent/received messages will appear here.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Load Socket.io and custom frontend logic -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

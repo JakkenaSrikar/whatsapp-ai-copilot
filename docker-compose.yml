@@ -1,0 +1,16 @@
+services:
+  whatsapp-ai-agent:
+    build: .
+    container_name: whatsapp-ai-agent
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # Persist WhatsApp session files across restarts
+      - ./data/wwebjs_auth:/app/.wwebjs_auth
+      # Persist settings configuration
+      - ./config.json:/app/config.json
+    environment:
+      - PORT=3000
+      - PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+      - PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
