@@ -565,14 +565,25 @@ function cleanZombieChromium(callback) {
 }
 
 // --- WhatsApp Client Logic ---
-function initializeWhatsAppClient() {
+let isInitializing = false;
+
+async function initializeWhatsAppClient() {
+    if (isInitializing) {
+        console.log('[Notice] WhatsApp client is already initializing. Skipping duplicate request.');
+        return;
+    }
+    isInitializing = true;
+
     if (client) {
         try {
-            client.destroy();
+            await client.destroy();
             sendLog('WhatsApp', 'Destroyed existing client session.', 'system');
+            // Allow operating system 1.5s to fully release SQLite / LevelDB file handles
+            await new Promise(res => setTimeout(res, 1500));
         } catch (err) {
             sendLog('WhatsApp', `Error destroying client: ${err.message}`, 'error');
         }
+        client = null;
     }
 
     botState = 'connecting';
@@ -581,24 +592,30 @@ function initializeWhatsAppClient() {
 
     sendLog('WhatsApp', 'Initializing whatsapp-web.js client with LocalAuth...', 'system');
 
-    client = new Client({
-        authStrategy: new LocalAuth({
-            clientId: 'whatsapp-ai-session'
-        }),
-        puppeteer: {
-            headless: true,
-            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-extensions',
-                '--no-default-browser-check',
-                '--disable-gpu',
-                '--disable-dev-shm-usage'
-            ],
-            timeout: 60000
-        }
-    });
+    try {
+        client = new Client({
+            authStrategy: new LocalAuth({
+                clientId: 'whatsapp-ai-session'
+            }),
+            puppeteer: {
+                headless: true,
+                executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-extensions',
+                    '--no-default-browser-check',
+                    '--disable-gpu',
+                    '--disable-dev-shm-usage'
+                ],
+                timeout: 60000
+            }
+        });
+    } catch (createErr) {
+        isInitializing = false;
+        sendLog('WhatsApp', `Failed to create client instance: ${createErr.message}`, 'error');
+        return;
+    }
 
     // Client Events
     client.on('qr', (qr) => {
@@ -612,6 +629,7 @@ function initializeWhatsAppClient() {
     });
 
     client.on('ready', async () => {
+        isInitializing = false;
         botState = 'connected';
         botDetail = 'Active and Listening';
         broadcastStatus();
@@ -652,6 +670,7 @@ function initializeWhatsAppClient() {
     });
 
     client.on('auth_failure', (msg) => {
+        isInitializing = false;
         botState = 'disconnected';
         botDetail = `Auth Failure: ${msg}`;
         broadcastStatus();
@@ -659,6 +678,7 @@ function initializeWhatsAppClient() {
     });
 
     client.on('disconnected', (reason) => {
+        isInitializing = false;
         botState = 'disconnected';
         botDetail = `Disconnected: ${reason}`;
         broadcastStatus();
@@ -754,6 +774,7 @@ function initializeWhatsAppClient() {
     });
 
     client.initialize().catch(err => {
+        isInitializing = false;
         botState = 'disconnected';
         botDetail = `Init Failed: ${err.message}`;
         broadcastStatus();
