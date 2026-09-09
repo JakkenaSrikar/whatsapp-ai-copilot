@@ -597,6 +597,10 @@ async function initializeWhatsAppClient() {
             authStrategy: new LocalAuth({
                 clientId: 'whatsapp-ai-session'
             }),
+            webVersionCache: {
+                type: 'remote',
+                remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.3000.1018908127-alpha.html',
+            },
             puppeteer: {
                 headless: true,
                 executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
@@ -606,9 +610,14 @@ async function initializeWhatsAppClient() {
                     '--disable-extensions',
                     '--no-default-browser-check',
                     '--disable-gpu',
-                    '--disable-dev-shm-usage'
+                    '--disable-dev-shm-usage',
+                    '--disable-features=IsolateOrigins,site-per-process',
+                    '--disable-site-isolation-trials',
+                    '--no-first-run',
+                    '--no-zygote'
                 ],
-                timeout: 60000
+                timeout: 90000,
+                protocolTimeout: 120000
             }
         });
     } catch (createErr) {
@@ -779,6 +788,21 @@ async function initializeWhatsAppClient() {
         botDetail = `Init Failed: ${err.message}`;
         broadcastStatus();
         sendLog('WhatsApp', `Initialization error: ${err.message}`, 'error');
+
+        // Auto-retry transient browser navigation errors
+        if (err.message && (
+            err.message.includes('Execution context was destroyed') || 
+            err.message.includes('Protocol error') || 
+            err.message.includes('timeout') ||
+            err.message.includes('Target closed')
+        )) {
+            sendLog('WhatsApp', 'Transient browser navigation error detected. Automatically retrying connection in 4 seconds...', 'system');
+            setTimeout(() => {
+                cleanZombieChromium(() => {
+                    initializeWhatsAppClient();
+                });
+            }, 4000);
+        }
     });
 }
 
