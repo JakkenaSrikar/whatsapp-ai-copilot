@@ -504,13 +504,28 @@ async function processAccumulatedMessages(chatId) {
             // Add to sending replies to prevent triggering manual pause
             sendingReplies.add(chatId);
 
-            // Send reply
-            const sentMsg = await lastMsgObj.reply(replyText);
+            // Send reply safely with fallback
+            let sentMsg;
+            if (lastMsgObj && typeof lastMsgObj.reply === 'function') {
+                try {
+                    sentMsg = await lastMsgObj.reply(replyText);
+                } catch (replyErr) {
+                    console.log(`[Notice] msg.reply failed (${replyErr.message}), falling back to client.sendMessage...`);
+                    sentMsg = await client.sendMessage(chatId, replyText);
+                }
+            } else {
+                sentMsg = await client.sendMessage(chatId, replyText);
+            }
             
             // Track this message ID so our own message_create event doesn't trigger a manual pause
-            sentByBotMessageIds.add(sentMsg.id.id);
-            // Clean up Set after 5 mins to prevent memory leakage
-            setTimeout(() => sentByBotMessageIds.delete(sentMsg.id.id), 5 * 60 * 1000);
+            if (sentMsg && sentMsg.id) {
+                const msgId = sentMsg.id._serialized || sentMsg.id.id;
+                if (msgId) {
+                    sentByBotMessageIds.add(msgId);
+                    // Clean up Set after 5 mins to prevent memory leakage
+                    setTimeout(() => sentByBotMessageIds.delete(msgId), 5 * 60 * 1000);
+                }
+            }
 
             repliesCount++;
             appStats.totalReplies++;

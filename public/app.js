@@ -98,6 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
             { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro (Complex Tasks)' }
         ],
         groq: [
+            { value: 'openai/gpt-oss-20b', label: 'GPT-OSS 20B (OpenAI / Groq)' },
             { value: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B (Free & Instant)' },
             { value: 'llama-3.3-70b-versatile', label: 'Llama 3.3 70B (High Quality)' },
             { value: 'gemma2-9b-it', label: 'Gemma 2 9B (Google Model)' }
